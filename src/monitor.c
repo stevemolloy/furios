@@ -24,11 +24,9 @@ void monitor_clear()
     u8int space  = 0x20; // a space symbol
     u8int attrib = 15;   // white on black
     u16int sym = (attrib << 8) | space;
-    int i;
-    for (i=0; i < 80*25; i++)
-    {
-        video_memory[i] = sym;
-    }
+
+    memsetw(video_memory, sym, 80*25);
+
     cursor_x = 0;
     cursor_y = 0;
     move_cursor();

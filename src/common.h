@@ -13,9 +13,19 @@ typedef          short s16int;
 typedef unsigned char  u8int;
 typedef          char  s8int;
 
+// Port I/O
 void outb(u16int port, u8int value);
 u8int inb(u16int port);
 u16int inw(u16int port);
+
+// Count characters in a string
+int strlen(char *s);
+
+// Set "count" bytes (16-bit) in "dest" to "val"
+unsigned short *memsetw(unsigned short *dest, unsigned short val, int count);
+
+// Set "count" bytes (8-bit) in "dest" to "val"
+unsigned char *memset(unsigned char *dest, unsigned char val, int count);
 
 #endif
 

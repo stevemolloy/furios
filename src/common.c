@@ -23,3 +23,34 @@ u16int inw(u16int port)
    return ret;
 } 
 
+int strlen(char *s)
+{
+    int i;
+    for (i=0; *s!='\0'; s++)
+    {
+        i++;
+    }
+    return i;
+}
+
+
+// Set "count" bytes (16-bit) in "dest" to "val"
+unsigned short *memsetw(unsigned short *dest, unsigned short val, int count)
+{
+    int i;
+    for (i=0; i<count; i++)
+    {
+        dest[i] = val;
+    }
+}
+
+// Set "count" bytes (8-bit) in "dest" to "val"
+unsigned char *memset(unsigned char *dest, unsigned char val, int count)
+{
+    int i;
+    for (i=0; i<count; i++)
+    {
+        dest[i] = val;
+    }
+}
+
