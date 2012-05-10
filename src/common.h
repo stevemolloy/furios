@@ -27,5 +27,8 @@ unsigned short *memsetw(unsigned short *dest, unsigned short val, int count);
 // Set "count" bytes (8-bit) in "dest" to "val"
 unsigned char *memset(unsigned char *dest, unsigned char val, int count);
 
+// Copy count bytes (8-bit) from src to dest
+unsigned char *memcpy(unsigned char *dest, const unsigned char *src, int count);
+
 #endif
 

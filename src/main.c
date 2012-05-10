@@ -6,7 +6,7 @@ int main(struct multiboot *mboot_ptr)
   // All our initialisation calls will go in here.
     int i;
     monitor_clear();
-    for (i=0; i<strlen("1234"); i++)
+    for (i=0; i<strlen("12345678"); i++)
     {
         monitor_write("Hi there!\n");
     }

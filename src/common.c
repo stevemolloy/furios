@@ -33,6 +33,15 @@ int strlen(char *s)
     return i;
 }
 
+// Copy "count" bytes from src to dest, and return dest
+unsigned char *memcpy(unsigned char *dest, const unsigned char *src, int count)
+{
+    int i;
+    for (i=0; i<count; i++)
+    {
+        dest[i] = src[i];
+    }
+}
 
 // Set "count" bytes (16-bit) in "dest" to "val"
 unsigned short *memsetw(unsigned short *dest, unsigned short val, int count)
