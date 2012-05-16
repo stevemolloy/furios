@@ -71,3 +71,36 @@ void monitor_write(char *c)
     }
 }
 
+void monitor_write_hex(u32int d)
+{
+    int i, shiftd, digit;
+    char *digits="0123456789ABCDEF";
+    int carry=0;
+
+    for (i=0; i<8; i++)
+    {
+        shiftd = d >> (32 - 4 - 4*i) & 0x0F;
+        monitor_put(digits[shiftd]);
+    }
+}
+
+void monitor_write_dec(u32int d)
+{
+    int i, shiftd, n;
+    int carry=0, top=-1;
+    char *digits="0123456789ABCDEF";
+    char stack[10];
+
+    while (d>0)
+    {
+        n = d % 10;
+        stack[++top] = digits[n];
+        d /= 10;
+    }
+    if (top==-1) monitor_put(digits[0]);
+    while (top>=0)
+    {
+        monitor_put(stack[top--]);
+    }
+}
+

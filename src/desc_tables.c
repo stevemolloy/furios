@@ -5,14 +5,21 @@
 
 static void add_seg_desc(s32int, u32int, u32int, u8int, u8int);
 static void init_gdt();
+static void add_idt_desc(s32int, s32int, u8int, u8int);
+static void init_idt();
 extern void gdt_gen(u32int);
+extern void idt_gen(u32int);
 
 gdt_segdesc_t gdt_entries[5];
 gdt_ptr_t gdt_ptr;
 
+idt_segdesc_t idt_entries[32];
+idt_ptr_t idt_ptr;
+
 void desc_tables_init()
 {
     init_gdt();
+    init_idt();
 }
 
 void init_gdt()
@@ -21,15 +28,14 @@ void init_gdt()
     u32int limit = 0xFFFFFFFF; // Address all 4 GiB (even if they don't exist!)
 
     add_seg_desc(0, 0, 0, 0, 0); // Null descriptor expected by many systems
-    add_seg_desc(1, base, limit, 0x9C, 0xC0); // Code, ring=0
+    add_seg_desc(1, base, limit, 0x9A, 0xC0); // Code, ring=0
     add_seg_desc(2, base, limit, 0x92, 0xC0); // Data, ring=0
-    add_seg_desc(3, base, limit, 0xFC, 0xC0); // Code, ring=3
+    add_seg_desc(3, base, limit, 0xFA, 0xC0); // Code, ring=3
     add_seg_desc(4, base, limit, 0xF2, 0xC0); // Data, ring=3
 
     gdt_ptr.base  = (u32int)&gdt_entries;
     gdt_ptr.limit = (sizeof(gdt_segdesc_t)*5 - 1);
 
-    monitor_write("Triple fault, here we come!!!");
     gdt_gen((u32int)&gdt_ptr);
 }
 
@@ -46,5 +52,55 @@ void add_seg_desc(s32int num, u32int base, u32int limit, u8int type, u8int other
     // The other_info u16int is composed of the lower 4 bits of the other_info input
     // plus bits 16:19 (inc, zero-indexed) of the limit
     gdt_entries[num].other_info = (u8int)(other_info & 0xF0) | (u8int)((limit >> 16) & 0x0F);
+}
+
+void init_idt()
+{
+    add_idt_desc(0, (u32int)isr0, 0x08, 0x8E);
+    add_idt_desc(1, (u32int)isr1, 0x08, 0x8E);
+    add_idt_desc(2, (u32int)isr2, 0x08, 0x8E);
+    add_idt_desc(3, (u32int)isr3, 0x08, 0x8E);
+    add_idt_desc(4, (u32int)isr4, 0x08, 0x8E);
+    add_idt_desc(5, (u32int)isr5, 0x08, 0x8E);
+    add_idt_desc(6, (u32int)isr6, 0x08, 0x8E);
+    add_idt_desc(7, (u32int)isr7, 0x08, 0x8E);
+    add_idt_desc(8, (u32int)isr8, 0x08, 0x8E);
+    add_idt_desc(9, (u32int)isr9, 0x08, 0x8E);
+    add_idt_desc(10, (u32int)isr10, 0x08, 0x8E);
+    add_idt_desc(11, (u32int)isr11, 0x08, 0x8E);
+    add_idt_desc(12, (u32int)isr12, 0x08, 0x8E);
+    add_idt_desc(13, (u32int)isr13, 0x08, 0x8E);
+    add_idt_desc(14, (u32int)isr14, 0x08, 0x8E);
+    add_idt_desc(15, (u32int)isr15, 0x08, 0x8E);
+    add_idt_desc(16, (u32int)isr16, 0x08, 0x8E);
+    add_idt_desc(17, (u32int)isr17, 0x08, 0x8E);
+    add_idt_desc(18, (u32int)isr18, 0x08, 0x8E);
+    add_idt_desc(19, (u32int)isr19, 0x08, 0x8E);
+    add_idt_desc(20, (u32int)isr20, 0x08, 0x8E);
+    add_idt_desc(21, (u32int)isr21, 0x08, 0x8E);
+    add_idt_desc(22, (u32int)isr22, 0x08, 0x8E);
+    add_idt_desc(23, (u32int)isr23, 0x08, 0x8E);
+    add_idt_desc(24, (u32int)isr24, 0x08, 0x8E);
+    add_idt_desc(25, (u32int)isr25, 0x08, 0x8E);
+    add_idt_desc(26, (u32int)isr26, 0x08, 0x8E);
+    add_idt_desc(27, (u32int)isr27, 0x08, 0x8E);
+    add_idt_desc(28, (u32int)isr28, 0x08, 0x8E);
+    add_idt_desc(29, (u32int)isr29, 0x08, 0x8E);
+    add_idt_desc(30, (u32int)isr30, 0x08, 0x8E);
+    add_idt_desc(31, (u32int)isr31, 0x08, 0x8E);
+
+    idt_ptr.base  = (u32int)&idt_entries;
+    idt_ptr.limit = (sizeof(idt_segdesc_t)*32 - 1);
+
+    idt_gen((u32int)&idt_ptr);
+}
+
+void add_idt_desc(s32int num, s32int handleraddr, u8int segsel, u8int flag)
+{
+    idt_entries[num].proc_offset_lo = handleraddr & 0xFFFF;
+    idt_entries[num].proc_offset_hi = handleraddr >> 16 & 0xFFFF;
+    idt_entries[num].seg_sel = segsel;
+    idt_entries[num].flag = flag;
+    idt_entries[num].zeros = 0x00;
 }
 

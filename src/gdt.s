@@ -17,3 +17,8 @@ gdt_gen:
 .done:
     ret
 
+idt_gen:
+    mov eax, [esp+4] ; get the pointer to the IDT passed as a param
+    lidt [eax] ; Load the IDT
+    ret
+
