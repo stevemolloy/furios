@@ -21,6 +21,10 @@ int main(struct multiboot *mboot_ptr)
     monitor_write_dec(num);
     monitor_write("\n");
     monitor_write_hex(num);
+    monitor_write("\n");
+
+    asm volatile ("int $0x3");
+    asm volatile ("int $0x4");
 
     return 0xDEADBEEF;
 } 

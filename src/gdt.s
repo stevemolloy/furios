@@ -1,6 +1,7 @@
 ; ASM for loading the GDT
 
 [GLOBAL gdt_gen]
+[GLOBAL idt_gen]
 
 gdt_gen:
     mov eax, [esp+4] ; pointer to GDT passed as a param
