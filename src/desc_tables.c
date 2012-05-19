@@ -13,7 +13,7 @@ extern void idt_gen(u32int);
 gdt_segdesc_t gdt_entries[5];
 gdt_ptr_t gdt_ptr;
 
-idt_segdesc_t idt_entries[32];
+idt_segdesc_t idt_entries[256];
 idt_ptr_t idt_ptr;
 
 void desc_tables_init()
@@ -56,6 +56,18 @@ void add_seg_desc(s32int num, u32int base, u32int limit, u8int type, u8int other
 
 void init_idt()
 {
+    // Remap the irq table.
+    outb(0x20, 0x11);
+    outb(0xA0, 0x11);
+    outb(0x21, 0x20);
+    outb(0xA1, 0x28);
+    outb(0x21, 0x04);
+    outb(0xA1, 0x02);
+    outb(0x21, 0x01);
+    outb(0xA1, 0x01);
+    outb(0x21, 0x0);
+    outb(0xA1, 0x0);
+
     add_idt_desc(0, (u32int)isr0, 0x08, 0x8E);
     add_idt_desc(1, (u32int)isr1, 0x08, 0x8E);
     add_idt_desc(2, (u32int)isr2, 0x08, 0x8E);
@@ -88,9 +100,26 @@ void init_idt()
     add_idt_desc(29, (u32int)isr29, 0x08, 0x8E);
     add_idt_desc(30, (u32int)isr30, 0x08, 0x8E);
     add_idt_desc(31, (u32int)isr31, 0x08, 0x8E);
+    // The following are the IRQ interrupts
+    add_idt_desc(32, (u32int)irq0, 0x08, 0x8E);
+    add_idt_desc(33, (u32int)irq1, 0x08, 0x8E);
+    add_idt_desc(34, (u32int)irq2, 0x08, 0x8E);
+    add_idt_desc(35, (u32int)irq3, 0x08, 0x8E);
+    add_idt_desc(36, (u32int)irq4, 0x08, 0x8E);
+    add_idt_desc(37, (u32int)irq5, 0x08, 0x8E);
+    add_idt_desc(38, (u32int)irq6, 0x08, 0x8E);
+    add_idt_desc(39, (u32int)irq7, 0x08, 0x8E);
+    add_idt_desc(40, (u32int)irq8, 0x08, 0x8E);
+    add_idt_desc(41, (u32int)irq9, 0x08, 0x8E);
+    add_idt_desc(42, (u32int)irq10, 0x08, 0x8E);
+    add_idt_desc(43, (u32int)irq11, 0x08, 0x8E);
+    add_idt_desc(44, (u32int)irq12, 0x08, 0x8E);
+    add_idt_desc(45, (u32int)irq13, 0x08, 0x8E);
+    add_idt_desc(46, (u32int)irq14, 0x08, 0x8E);
+    add_idt_desc(47, (u32int)irq15, 0x08, 0x8E);
 
     idt_ptr.base  = (u32int)&idt_entries;
-    idt_ptr.limit = (sizeof(idt_segdesc_t)*32 - 1);
+    idt_ptr.limit = (sizeof(idt_segdesc_t)*256 - 1);
 
     idt_gen((u32int)&idt_ptr);
 }

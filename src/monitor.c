@@ -19,6 +19,25 @@ static void move_cursor()
    outb(0x3D5, cursorLocation);      // Send the low cursor byte.
 } 
 
+static void monitor_scroll()
+{
+    u8int space  = 0x20; // a space symbol
+    u8int attrib = 15;   // white on black
+    u16int blank = (attrib << 8) | space;
+    int i;
+    for (i=0; i<80*24; i++)
+    {
+        video_memory[i] = video_memory[i+80];
+    }
+    for (i=80*24; i<80*25; i++)
+    {
+        video_memory[i] = space;
+    }
+    cursor_x = 0;
+    cursor_y = 24;
+    move_cursor();
+}
+
 void monitor_clear()
 {
     u8int space  = 0x20; // a space symbol
@@ -58,6 +77,10 @@ void monitor_put(char c)
     {
         cursor_x = 0;
         cursor_y++;
+    }
+    if (cursor_y>24)
+    {
+        monitor_scroll();
     }
     move_cursor();
 }
