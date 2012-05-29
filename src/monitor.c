@@ -127,23 +127,3 @@ void monitor_write_dec(u32int d)
     }
 }
 
-void monitor_write_declong(unsigned long d)
-{
-    int i, shiftd, n;
-    int carry=0, top=-1;
-    char *digits="0123456789ABCDEF";
-    char stack[20];
-
-    while (d>0)
-    {
-        n = d % 10;
-        stack[++top] = digits[n];
-        d /= 10;
-    }
-    if (top==-1) monitor_put(digits[0]);
-    while (top>=0)
-    {
-        monitor_put(stack[top--]);
-    }
-}
-
