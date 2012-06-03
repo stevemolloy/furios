@@ -1,4 +1,4 @@
-// Defining the descriptor tables (GDT, IDT)
+/*Defining the descriptor tables (GDT, IDT)*/
 
 #include "common.h"
 
@@ -10,7 +10,7 @@ struct gdt_segdesc_struct
     u8int type;
     u8int other_info;
     u8int base_high;
-} __attribute__((packed));  //Stop compiler "optimisations"
+} __attribute__((packed));  /*Stop compiler "optimisations"*/
 typedef struct gdt_segdesc_struct gdt_segdesc_t;
 
 struct gdt_ptr_struct
@@ -34,7 +34,7 @@ struct idt_segdesc_struct
     u8int  zeros;
     u8int  flag;
     u16int proc_offset_hi;
-} __attribute__((packed));  //Stop compiler "optimisations"
+} __attribute__((packed));  /*Stop compiler "optimisations"*/
 typedef struct idt_segdesc_struct idt_segdesc_t;
 
 void desc_tables_init();

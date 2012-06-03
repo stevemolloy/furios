@@ -6,29 +6,47 @@
 ENTRY(start)
 SECTIONS
 {
-  .text 0x100000 :
+  . = 0x100000;
+
+  .setup :
   {
-    code = .; _code = .; __code = .;
-    *(.text)
-    . = ALIGN(4096);
+    *(.setup)
   }
 
-  .data :
+  . = ALIGN(4096);
+  /*offset = .;*/
+  . += 0xC0000000;
+
+  /*.text : AT(offset)*/
+  .text : AT(ADDR(.text) - 0xC0000000)
   {
-     data = .; _data = .; __data = .;
+    /*code = .; _code = .; __code = .;*/
+    *(.text)
+  }
+
+  /*. = ALIGN(4096);*/
+  /*diff = . - 0xC0000000;*/
+
+  /*.data ALIGN (4096) : AT(offset + diff)*/
+  .data : AT(ADDR(.data) - 0XC0000000)
+  {
+     /*data = .; _data = .; __data = .;*/
      *(.data)
      *(.rodata)
-     . = ALIGN(4096);
+     /*. = ALIGN(4096);*/
   }
 
-  .bss :
+  /*. = ALIGN(4096);*/
+  /*diff = . - 0xC0000000;*/
+
+  /*.bss ALIGN (4096) : AT(offset + diff)*/
+  .bss : AT(ADDR(.bss) - 0xC0000000)
   {
-    bss = .; _bss = .; __bss = .;
+    /*bss = .; _bss = .; __bss = .;*/
     *(.bss)
-    . = ALIGN(4096);
+    /*. = ALIGN(4096);*/
   }
 
   end = .; _end = .; __end = .;
 } 
-
 

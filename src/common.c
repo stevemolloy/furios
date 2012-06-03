@@ -1,9 +1,9 @@
-// common.c -- Defines some global functions.
-// From JamesM's kernel development tutorials.
+/*common.c -- Defines some global functions.*/
+/*From JamesM's kernel development tutorials.*/
 
 #include "common.h"
 
-// Write a byte out to the specified port.
+/*Write a byte out to the specified port.*/
 void outb(u16int port, u8int value)
 {
     asm volatile ("outb %1, %0" : : "dN" (port), "a" (value));
@@ -33,8 +33,9 @@ int strlen(char *s)
     return i;
 }
 
-// Copy "count" bytes from src to dest, and return dest
-unsigned char *memcpy(unsigned char *dest, const unsigned char *src, int count)
+/*Copy "count" bytes from src to dest, and return dest*/
+/*unsigned char *memcpy(unsigned char *dest, const unsigned char *src, int count)*/
+void memcpy(unsigned char *dest, const unsigned char *src, int count)
 {
     int i;
     for (i=0; i<count; i++)
@@ -43,8 +44,9 @@ unsigned char *memcpy(unsigned char *dest, const unsigned char *src, int count)
     }
 }
 
-// Set "count" bytes (16-bit) in "dest" to "val"
-unsigned short *memsetw(unsigned short *dest, unsigned short val, int count)
+/*Set "count" bytes (16-bit) in "dest" to "val"*/
+/*unsigned short *memsetw(unsigned short *dest, unsigned short val, int count)*/
+void memsetw(unsigned short *dest, unsigned short val, int count)
 {
     int i;
     for (i=0; i<count; i++)
@@ -53,8 +55,9 @@ unsigned short *memsetw(unsigned short *dest, unsigned short val, int count)
     }
 }
 
-// Set "count" bytes (8-bit) in "dest" to "val"
-unsigned char *memset(unsigned char *dest, unsigned char val, int count)
+/*Set "count" bytes (8-bit) in "dest" to "val"*/
+/*unsigned char *memset(unsigned char *dest, unsigned char val, int count)*/
+void memset(unsigned char *dest, unsigned char val, int count)
 {
     int i;
     for (i=0; i<count; i++)

@@ -5,7 +5,7 @@
 
 SOURCES=boot.o common.o desc_tables.o gdt.o interupt.o isr.o main.o monitor.o timer.o
 
-CFLAGS=-m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector
+CFLAGS=-m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector -Wall -Wextra -pedantic
 LDFLAGS=-Tlink.ld
 ASFLAGS=-felf
 

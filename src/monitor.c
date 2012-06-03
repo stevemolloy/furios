@@ -1,28 +1,31 @@
-// Much of this is based on James Molloys tutorial,
-// but it also represents my first attempts to write code myself!
+/*Much of this is based on James Molloys tutorial,*/
+/*but it also represents my first attempts to write code myself!*/
 
 #include "monitor.h"
+#define logical_to_physical(x) (((void*) x) + 0x40000000)
+#define physical_to_logical(x) (((void*) x) - 0x40000000)
 
 int cursor_x = 0;
 int cursor_y = 0;
-u16int *video_memory = (u16int *)0xB8000; // Video framebuffer begins at 0xB8000
-u8int attrib = 15;   // white on black
+/*u16int *video_memory = (u16int *)(0xB8000 - 0x4000000); // Video framebuffer begins at 0xB8000 (higher-half)*/
+short *video_memory = physical_to_logical(0xB8000);
+u8int attrib = 15;   /*white on black*/
 
-// Updates the hardware cursor.
+/*Updates the hardware cursor.*/
 static void move_cursor()
 {
-   // The screen is 80 characters wide...
+   /*The screen is 80 characters wide...*/
    u16int cursorLocation = cursor_y * 80 + cursor_x;
-   outb(0x3D4, 14);                  // Tell the VGA board we are setting the high cursor byte.
-   outb(0x3D5, cursorLocation >> 8); // Send the high cursor byte.
-   outb(0x3D4, 15);                  // Tell the VGA board we are setting the low cursor byte.
-   outb(0x3D5, cursorLocation);      // Send the low cursor byte.
+   outb(0x3D4, 14);                  /*Tell the VGA board we are setting the high cursor byte.*/
+   outb(0x3D5, cursorLocation >> 8); /*Send the high cursor byte.*/
+   outb(0x3D4, 15);                  /*Tell the VGA board we are setting the low cursor byte.*/
+   outb(0x3D5, cursorLocation);      /*Send the low cursor byte.*/
 } 
 
 static void monitor_scroll()
 {
-    u8int space  = 0x20; // a space symbol
-    u8int attrib = 15;   // white on black
+    u8int space  = 0x20; /*a space symbol*/
+    u8int attrib = 15;   /*white on black*/
     u16int blank = (attrib << 8) | space;
     int i;
     for (i=0; i<80*24; i++)
@@ -31,7 +34,7 @@ static void monitor_scroll()
     }
     for (i=80*24; i<80*25; i++)
     {
-        video_memory[i] = space;
+        video_memory[i] = blank;
     }
     cursor_x = 0;
     cursor_y = 24;
@@ -40,8 +43,8 @@ static void monitor_scroll()
 
 void monitor_clear()
 {
-    u8int space  = 0x20; // a space symbol
-    u8int attrib = 15;   // white on black
+    u8int space  = 0x20; /*a space symbol*/
+    u8int attrib = 15;   /*white on black*/
     u16int sym = (attrib << 8) | space;
 
     memsetw(video_memory, sym, 80*25);
@@ -53,14 +56,14 @@ void monitor_clear()
 
 void monitor_put(char c)
 {
-    // Newline
+    /*Newline*/
     if (c == '\n')
     {
         cursor_x = 0;
         cursor_y++;
     }
 
-    // Carriage return
+    /*Carriage return*/
     if (c == '\r')
     {
         cursor_x = 0;
@@ -96,9 +99,8 @@ void monitor_write(char *c)
 
 void monitor_write_hex(u32int d)
 {
-    int i, shiftd, digit;
+    int i, shiftd;
     char *digits="0123456789ABCDEF";
-    int carry=0;
 
     for (i=0; i<8; i++)
     {
@@ -109,8 +111,8 @@ void monitor_write_hex(u32int d)
 
 void monitor_write_dec(u32int d)
 {
-    int i, shiftd, n;
-    int carry=0, top=-1;
+    int n;
+    int top=-1;
     char *digits="0123456789ABCDEF";
     char stack[10];
 
@@ -129,8 +131,8 @@ void monitor_write_dec(u32int d)
 
 void monitor_write_declong(unsigned long d)
 {
-    int i, shiftd, n;
-    int carry=0, top=-1;
+    int n;
+    int top=-1;
     char *digits="0123456789ABCDEF";
     char stack[20];
 
