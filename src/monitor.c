@@ -2,13 +2,11 @@
 /*but it also represents my first attempts to write code myself!*/
 
 #include "monitor.h"
-#define logical_to_physical(x) (((void*) x) + 0x40000000)
-#define physical_to_logical(x) (((void*) x) - 0x40000000)
 
 int cursor_x = 0;
 int cursor_y = 0;
 /*u16int *video_memory = (u16int *)(0xB8000 - 0x4000000); // Video framebuffer begins at 0xB8000 (higher-half)*/
-short *video_memory = physical_to_logical(0xB8000);
+unsigned short *video_memory = (unsigned short *)0xB8000;
 u8int attrib = 15;   /*white on black*/
 
 /*Updates the hardware cursor.*/

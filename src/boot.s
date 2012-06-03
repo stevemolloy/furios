@@ -23,7 +23,7 @@ mboot:
    
 ; The OS code starts here!!
 start:
-  push    ebx                   ; Load multiboot header location
+  push    ebx                   ; Preserve multiboot header location
 
   mov ebx, page_dir             ; EBX now points at the page directory
   mov edx, page_table0          ; EDX now points at the first table
@@ -61,11 +61,11 @@ table_loop:                     ; Loop around eax
 
 ALIGN 4096
 page_dir:
-  resb 4096                     ; Reserve 4kB for the page directory
+  times 4096 db 0                ; Reserve 4kB for the page directory
 
 ALIGN 4096
 page_table0:
-  resb 4096                     ; Reserve 4kB for the first page (identity mapping 1st 4MB)
+  times 4096 db 0                ; Reserve 4kB for the first page (identity mapping 1st 4MB)
 
 gdt:
   dw gdt_end - flatgdt - 1        ; Size of the GDT
@@ -82,7 +82,10 @@ gdt_end:
 kernelcall:
   ; Execute the kernel:
   cli                         ; Disable interrupts.
+  xor eax, eax
+  pop eax                     ; Pop the multiboot info from the (soon to be old) stack
   mov esp, sys_stack          ; set up a new stack for the higher-half kernel
+  push eax                    ; Push the multiboot info back onto the (new) stack
   call main                   ; call our main() function.
   jmp $                       ; Enter an infinite loop, to stop the processor
                               ; executing whatever rubbish is in the memory
