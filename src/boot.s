@@ -26,13 +26,13 @@ start:
   push    ebx                   ; Preserve multiboot header location
 
   mov ebx, page_dir             ; EBX now points at the page directory
+  push ebx                      ; Preserve page_dir address to pass to the kernel
   mov edx, page_table0          ; EDX now points at the first table
 
 ; Loop to zero the page directory (to be filled later) and fill table0
   xor eax, eax                  ; set loop counter to zero
   mov ecx, 3                    ; ecx = PRESENT | WRITEABLE
 table_loop:                     ; Loop around eax
-  mov dword [ebx + eax*4], 0    ; Zero the EAX'th entry of the directory
   mov dword [edx + eax*4], ecx  ; EAX'th table entry = ECX (stepped by 4k each time)
   add ecx, 0x1000               ; Increment ECX by 4096 (the size of the page)
   inc eax                       ; EAX++
@@ -65,7 +65,7 @@ page_dir:
 
 ALIGN 4096
 page_table0:
-  times 4096 db 0                ; Reserve 4kB for the first page (identity mapping 1st 4MB)
+  times 4096 db 0                ; Reserve 4kB for the first page (to map 1st 4MB)
 
 gdt:
   dw gdt_end - flatgdt - 1        ; Size of the GDT
@@ -82,10 +82,11 @@ gdt_end:
 kernelcall:
   ; Execute the kernel:
   cli                         ; Disable interrupts.
-  xor eax, eax
-  pop eax                     ; Pop the multiboot info from the (soon to be old) stack
+  pop ebx                     ; Recover page_dir address and the...
+  pop edx                     ; ...mboot header before moving to higher-half stack
   mov esp, sys_stack          ; set up a new stack for the higher-half kernel
-  push eax                    ; Push the multiboot info back onto the (new) stack
+  push ebx                    ; Push page_dir address onto the new stack
+  push edx                    ; Push the multiboot info back onto the (new) stack
   call main                   ; call our main() function.
   jmp $                       ; Enter an infinite loop, to stop the processor
                               ; executing whatever rubbish is in the memory

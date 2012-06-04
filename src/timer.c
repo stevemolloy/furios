@@ -10,12 +10,12 @@ u32int tick = 0;
 static void timer_callback()
 {
    tick++;
-   /*if (tick<10)*/
-  /* */
-   /*monitor_write("Tick: ");*/
-   /*monitor_write_dec(tick);*/
-   /*monitor_write("\n");*/
-  /* */
+   /*if (tick<10)
+   {
+       monitor_write("Tick: ");
+       monitor_write_dec(tick);
+       monitor_write("\n");
+   }*/
 }
 
 void init_timer(u32int frequency)
@@ -25,10 +25,10 @@ void init_timer(u32int frequency)
    /*Firstly, register our timer callback.*/
    register_interrupt_handler(IRQ0, &timer_callback);
 
-   /*The value we send to the PIT is the value to divide it's input clock*/
-   /*(1193180 Hz) by, to get our required frequency. Important to note is*/
-   /*that the divisor must be small enough to fit into 16-bits.*/
-   /*Divisor has to be sent byte-wise, so split here into upper/lower bytes.*/
+   /*The value we send to the PIT is the value to divide it's input clock
+   (1193180 Hz) by, to get our required frequency. Important to note is
+   that the divisor must be small enough to fit into 16-bits.
+   Divisor has to be sent byte-wise, so split here into upper/lower bytes.*/
    divisor = 1193180 / frequency;
    l = (u8int)(divisor & 0xFF);
    h = (u8int)( (divisor>>8) & 0xFF );

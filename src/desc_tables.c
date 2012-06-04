@@ -3,11 +3,11 @@
 #include "desc_tables.h"
 #include "monitor.h"
 
-static void add_seg_desc(s32int, u32int, u32int, u8int, u8int);
-static void init_gdt();
+/*static void add_seg_desc(s32int, u32int, u32int, u8int, u8int);*/
+/*static void init_gdt();*/
 static void add_idt_desc(s32int, s32int, u8int, u8int);
 static void init_idt();
-extern void gdt_gen(u32int);
+/*extern void gdt_gen(u32int);*/
 extern void idt_gen(u32int);
 
 gdt_segdesc_t gdt_entries[5];
@@ -18,28 +18,30 @@ idt_ptr_t idt_ptr;
 
 void desc_tables_init()
 {
-    init_gdt(); /*Commented out cos GDT is in boot.s until paging is switched on*/
+    /*init_gdt(); Commented out cos GDT is in boot.s*/
     init_idt();
 }
 
+/* No longer needed since GDT is set up in boot.s
 void init_gdt()
 {
-    u32int base  = 0x0; /*Memory starts at zero!*/
-    /*u32int base  = 0x41000000; Playing tricks!*/
-    u32int limit = 0xFFFFFFFF; /*Address all 4 GiB (even if they don't exist!)*/
+    u32int base  = 0x0; 
+    u32int limit = 0xFFFFFFFF; 
 
-    add_seg_desc(0, 0, 0, 0, 0); /*Null descriptor expected by many systems*/
-    add_seg_desc(1, base, limit, 0x9A, 0xC0); /*Code, ring=0*/
-    add_seg_desc(2, base, limit, 0x92, 0xC0); /*Data, ring=0*/
-    add_seg_desc(3, base, limit, 0xFA, 0xC0); /*Code, ring=3*/
-    add_seg_desc(4, base, limit, 0xF2, 0xC0); /*Data, ring=3*/
+    add_seg_desc(0, 0, 0, 0, 0); 
+    add_seg_desc(1, base, limit, 0x9A, 0xC0); 
+    add_seg_desc(2, base, limit, 0x92, 0xC0); 
+    add_seg_desc(3, base, limit, 0xFA, 0xC0); 
+    add_seg_desc(4, base, limit, 0xF2, 0xC0); 
 
     gdt_ptr.base  = (u32int)&gdt_entries;
     gdt_ptr.limit = (sizeof(gdt_segdesc_t)*5 - 1);
 
     gdt_gen((u32int)&gdt_ptr);
 }
+*/
 
+/* No longer needed since GDT is set up in boot.s
 void add_seg_desc(s32int num, u32int base, u32int limit, u8int type, u8int other_info)
 {
     gdt_entries[num].base_low   = (u16int)(base & 0xFFFF);
@@ -50,10 +52,9 @@ void add_seg_desc(s32int num, u32int base, u32int limit, u8int type, u8int other
 
     gdt_entries[num].type       = type;
 
-    /*The other_info u16int is composed of the lower 4 bits of the other_info input*/
-    /*plus bits 16:19 (inc, zero-indexed) of the limit*/
     gdt_entries[num].other_info = (u8int)(other_info & 0xF0) | (u8int)((limit >> 16) & 0x0F);
 }
+*/
 
 void init_idt()
 {
