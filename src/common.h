@@ -33,5 +33,7 @@ void memset(unsigned char *dest, unsigned char val, int count);
 /*unsigned char *memcpy(unsigned char *dest, const unsigned char *src, int count);*/
 void memcpy(unsigned char *dest, const unsigned char *src, int count);
 
+void PANIC(char *mess);
+
 #endif
 

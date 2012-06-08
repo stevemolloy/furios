@@ -2,6 +2,7 @@
 /*From JamesM's kernel development tutorials.*/
 
 #include "common.h"
+#include "monitor.h"
 
 /*Write a byte out to the specified port.*/
 void outb(u16int port, u8int value)
@@ -64,5 +65,13 @@ void memset(unsigned char *dest, unsigned char val, int count)
     {
         dest[i] = val;
     }
+}
+
+void PANIC(char *mess)
+{
+    monitor_write("\n");
+    monitor_write(mess);
+    monitor_write("\n");
+    for (;;){}
 }
 

@@ -5,6 +5,7 @@
 [section .setup]
 [GLOBAL start]                  ; Kernel entry point.
 [EXTERN main]                   ; This is the entry point of our C code
+[EXTERN end]
 
 MBOOT_PAGE_ALIGN    equ 1<<0    ; Load kernel and modules on a page boundary
 MBOOT_MEM_INFO      equ 1<<1    ; Provide your kernel with memory info
@@ -25,6 +26,8 @@ mboot:
 start:
   push    ebx                   ; Preserve multiboot header location
 
+  mov ebx, end                  ; The end of the kernel
+  push ebx                      ; Preserve this on the stack
   mov ebx, page_dir             ; EBX now points at the page directory
   push ebx                      ; Preserve page_dir address to pass to the kernel
   mov edx, page_table0          ; EDX now points at the first table
@@ -82,10 +85,12 @@ gdt_end:
 kernelcall:
   ; Execute the kernel:
   cli                         ; Disable interrupts.
-  pop ebx                     ; Recover page_dir address and the...
+  pop ecx                     ; Pop the page directory address off the stack ...
+  pop ebx                     ; as well as the "end" symbols and the ...
   pop edx                     ; ...mboot header before moving to higher-half stack
   mov esp, sys_stack          ; set up a new stack for the higher-half kernel
-  push ebx                    ; Push page_dir address onto the new stack
+  ;push ebx                    ; Push the end symbol onto the new stack
+  push ecx                    ; Push page_dir address onto the new stack
   push edx                    ; Push the multiboot info back onto the (new) stack
   call main                   ; call our main() function.
   jmp $                       ; Enter an infinite loop, to stop the processor
