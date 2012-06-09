@@ -7,9 +7,11 @@ Made for JamesM's tutorials*/
 #include "monitor.h"
 #include "desc_tables.h"
 #include "physmemmanag.h"
+#include "pagemanager.h"
 
 extern const void end; /* The symbol for the end of the kernel memory*/
-u32int *physstack_end; /* These two lines define the physical memory...*/
+u32int *physstack_start; /* These three lines define the physical memory...*/
+u32int *physstack_end; /* ... */
 u32int *physstack_ptr; /* ...manager stack*/
 
 int main(unsigned long addr, u32int page_dir)
@@ -43,16 +45,22 @@ int main(unsigned long addr, u32int page_dir)
     monitor_write_dec((u32int)total_memory_size);
     monitor_write(" kiB of usable RAM.\n");
 
-    physmemstack_init((u32int)total_memory_size, kernelend);
+    /*physmemstack_init((u32int)total_memory_size, kernelend);*/
+    physmemstack_init(mbi, kernelend);
     monitor_write("Physical memory stack initialised & filled\n");
     monitor_write("Pointer to end of physical memory stack = 0x");
     monitor_write_hex((u32int)physstack_end);
     monitor_write("\n");
 
+    /* Initialise the page manager (virtual mem management)*/
+    page_manager_init(page_dir);
+    monitor_write("Identity mapping of first 4MB (physical) has been removed.\n");
+    monitor_write("        Kernel now purely higher half (virtually, not physically!)\n");
+
     desc_tables_init(); /*IDT*/
     monitor_write("Global and Interrupt Descriptor Tables (GDT & IDT) configured.\n");
-    asm volatile ("int $0x3");
-    asm volatile ("int $0x4");
+    /*asm volatile ("int $0x3");
+    asm volatile ("int $0x4");*/
 
     init_timer(pit_freq);
     monitor_write("Programmable Interval Timer firing at ");
