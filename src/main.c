@@ -28,6 +28,16 @@ int main(unsigned long addr, u32int page_dir)
     /*Initialise the screen (clear it!)*/
     monitor_clear();
 
+    desc_tables_init(); /*GDT & IDT*/
+    monitor_write("Global and Interrupt Descriptor Tables (GDT & IDT) configured.\n");
+    /*asm volatile ("int $0x3");
+    asm volatile ("int $0x4");*/
+
+    init_timer(pit_freq);
+    monitor_write("Programmable Interval Timer firing at ");
+    monitor_write_dec(pit_freq);
+    monitor_write(" Hz.\n");
+
     /* Page dir location stored in page_dir*/
     monitor_write("Page directory at 0x");
     monitor_write_hex(page_dir);
@@ -56,16 +66,6 @@ int main(unsigned long addr, u32int page_dir)
     page_manager_init(page_dir);
     monitor_write("Identity mapping of first 4MB (physical) has been removed.\n");
     monitor_write("        Kernel now purely higher half (virtually, not physically!)\n");
-
-    desc_tables_init(); /*GDT & IDT*/
-    monitor_write("Global and Interrupt Descriptor Tables (GDT & IDT) configured.\n");
-    /*asm volatile ("int $0x3");
-    asm volatile ("int $0x4");*/
-
-    init_timer(pit_freq);
-    monitor_write("Programmable Interval Timer firing at ");
-    monitor_write_dec(pit_freq);
-    monitor_write(" Hz.\n");
 
     /* Restart interrupts*/
     asm volatile ("sti");

@@ -69,7 +69,6 @@ void memset(unsigned char *dest, unsigned char val, int count)
 
 void PANIC(char *mess)
 {
-    monitor_write("\n");
     monitor_write("PANIC!! ");
     monitor_write(mess);
     monitor_write("\n");

@@ -8,7 +8,7 @@ void page_manager_init(u32int pagedirloc)
     u32int *pagedirptr = (u32int*)pagedirloc;
     /*pagedirptr[0] = (u32int)0;*/
     remove_identityMB(pagedirptr);
-    register_interrupt_handler(14, page_fault);
+    register_interrupt_handler(14, &page_fault);
 }
 
 void remove_identityMB(u32int *pdptr)
@@ -34,22 +34,22 @@ void page_fault(registers_t regs)
    u32int faulting_address;
 
    /* The error code gives us details of what happened.*/
-   int present   = !(regs.err_code & 0x1); /* Page not present*/
-   int rw = regs.err_code & 0x2;           /* Write operation?*/
-   int us = regs.err_code & 0x4;           /* Processor was in user-mode?*/
-   int reserved = regs.err_code & 0x8;     /* Overwritten CPU-reserved bits of page entry?*/
-   int id = regs.err_code & 0x10;          /* Caused by an instruction fetch?*/
+   int present  = !(regs.err_code & 0x1); /* Page not present*/
+   int rw       =   regs.err_code & 0x2;  /* Write operation?*/
+   int us       =   regs.err_code & 0x4;  /* Processor was in user-mode?*/
+   int reserved =   regs.err_code & 0x8;  /* Overwritten CPU-reserved bits of page entry?*/
+   int id       =   regs.err_code & 0x10; /* Caused by an instruction fetch?*/
 
    asm volatile("mov %%cr2, %0" : "=r" (faulting_address));
 
    /* Output an error message.*/
-   monitor_write("Page fault! ( ");
+   monitor_write("Page fault! --> ");
    if (present) {monitor_write("present ");}
    if (rw) {monitor_write("read-only ");}
    if (us) {monitor_write("user-mode ");}
    if (reserved) {monitor_write("reserved ");}
    if (id) {monitor_write("instruction fetch ");}
-   monitor_write(") at 0x");
+   monitor_write("at 0x");
    monitor_write_hex(faulting_address);
    monitor_write("\n");
    PANIC("Page fault");
