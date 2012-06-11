@@ -3,11 +3,11 @@
 #include "desc_tables.h"
 #include "monitor.h"
 
-/*static void add_seg_desc(s32int, u32int, u32int, u8int, u8int);*/
-/*static void init_gdt();*/
+static void add_seg_desc(s32int, u32int, u32int, u8int, u8int);
+static void init_gdt();
 static void add_idt_desc(s32int, s32int, u8int, u8int);
 static void init_idt();
-/*extern void gdt_gen(u32int);*/
+extern void gdt_gen(u32int);
 extern void idt_gen(u32int);
 
 gdt_segdesc_t gdt_entries[5];
@@ -18,11 +18,10 @@ idt_ptr_t idt_ptr;
 
 void desc_tables_init()
 {
-    /*init_gdt(); Commented out cos GDT is in boot.s*/
+    init_gdt();
     init_idt();
 }
 
-/* No longer needed since GDT is set up in boot.s
 void init_gdt()
 {
     u32int base  = 0x0; 
@@ -39,9 +38,7 @@ void init_gdt()
 
     gdt_gen((u32int)&gdt_ptr);
 }
-*/
 
-/* No longer needed since GDT is set up in boot.s
 void add_seg_desc(s32int num, u32int base, u32int limit, u8int type, u8int other_info)
 {
     gdt_entries[num].base_low   = (u16int)(base & 0xFFFF);
@@ -54,7 +51,6 @@ void add_seg_desc(s32int num, u32int base, u32int limit, u8int type, u8int other
 
     gdt_entries[num].other_info = (u8int)(other_info & 0xF0) | (u8int)((limit >> 16) & 0x0F);
 }
-*/
 
 void init_idt()
 {

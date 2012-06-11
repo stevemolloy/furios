@@ -57,7 +57,7 @@ int main(unsigned long addr, u32int page_dir)
     monitor_write("Identity mapping of first 4MB (physical) has been removed.\n");
     monitor_write("        Kernel now purely higher half (virtually, not physically!)\n");
 
-    desc_tables_init(); /*IDT*/
+    desc_tables_init(); /*GDT & IDT*/
     monitor_write("Global and Interrupt Descriptor Tables (GDT & IDT) configured.\n");
     /*asm volatile ("int $0x3");
     asm volatile ("int $0x4");*/
@@ -67,7 +67,8 @@ int main(unsigned long addr, u32int page_dir)
     monitor_write_dec(pit_freq);
     monitor_write(" Hz.\n");
 
-    asm volatile ("sti"); /* Restart interrupts*/
+    /* Restart interrupts*/
+    asm volatile ("sti");
     monitor_write("Interrupts reenabled.\n");
 
     monitor_write("\nBOOTED! :)\n\nWelcome to FuriOS!\n");

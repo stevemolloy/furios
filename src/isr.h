@@ -2,6 +2,9 @@
 /*Part of this code is modified from Bran's kernel development tutorials.*/
 /*Rewritten for JamesM's kernel development tutorials.*/
 
+#ifndef ISR_H
+#define ISR_H
+
 #include "common.h"
 
 typedef struct registers
@@ -36,4 +39,6 @@ void irq_handler(registers_t regs);
 /*For IRQs, to ease confusion, use the #defines above as the*/
 /*first parameter.*/
 void register_interrupt_handler(u8int n, isr_t handler); 
+
+#endif
 

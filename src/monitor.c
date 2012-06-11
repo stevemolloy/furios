@@ -6,7 +6,7 @@
 int cursor_x = 0;
 int cursor_y = 0;
 /*u16int *video_memory = (u16int *)(0xB8000 - 0x4000000); // Video framebuffer begins at 0xB8000 (higher-half)*/
-unsigned short *video_memory = (unsigned short *)0xB8000;
+unsigned short *video_memory = (unsigned short *)(0xB8000 + 0xC0000000);
 u8int attrib = 15;   /*white on black*/
 
 /*Updates the hardware cursor.*/
