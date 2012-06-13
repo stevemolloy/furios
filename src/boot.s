@@ -89,9 +89,16 @@ kernelcall:
   pop ebx                     ; as well as the "end" symbols and the ...
   pop edx                     ; ...mboot header before moving to higher-half stack
   mov esp, sys_stack          ; set up a new stack for the higher-half kernel
+
+  ; Push elements of argv onto stack in reverse order
+  push ecx 					  ; Push page_dir address onto the new stack
+  push edx					  ; Push the multiboot info back onto the (new) stack
+  push 0					  ; Push placeholder for argv[0] - should be process name
+
+  push esp					  ; Push array pointer - esp now points to base of argv array
+  push 2					  ; Push value of argc
   ;push ebx                    ; Push the end symbol onto the new stack
-  push ecx                    ; Push page_dir address onto the new stack
-  push edx                    ; Push the multiboot info back onto the (new) stack
+
   call main                   ; call our main() function.
   jmp $                       ; Enter an infinite loop, to stop the processor
                               ; executing whatever rubbish is in the memory
