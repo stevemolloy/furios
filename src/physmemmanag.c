@@ -6,8 +6,8 @@
 #include "monitor.h"
 
 extern const void end;
-extern u32int *physstack_start;
-extern u32int *physstack_end;
+extern const u32int *physstack_start;
+extern const u32int *physstack_end;
 extern u32int *physstack_ptr;
 
 void physmemstack_init(multiboot_info_t *mbi, u32int kernelend)
@@ -38,7 +38,6 @@ void physmemstack_init(multiboot_info_t *mbi, u32int kernelend)
     fill_stack(mbi, kernelend);
 }
 
-/*void fill_stack(u32int totmem)*/
 void fill_stack(multiboot_info_t *mbi, u32int kend)
 {
     u32int length;
