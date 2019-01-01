@@ -19,5 +19,5 @@ kernel.o: kernel.c
 	$(CC) -c kernel.c -o kernel.o $(CFLAGS)
 
 clean:
-	rm *.o furios.bin
+	rm -f *.o furios.bin
 
