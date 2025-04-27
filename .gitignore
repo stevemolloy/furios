@@ -1,3 +1,4 @@
-*.iso
-isodir
-sysroot
+build_tools
+build
+isodir/boot/myos.bin
+myos.iso
