@@ -13,7 +13,7 @@
 #endif
 
 /* Hardware text mode color constants. */
-enum vga_color {
+typedef enum {
 	VGA_COLOR_BLACK = 0,
 	VGA_COLOR_BLUE = 1,
 	VGA_COLOR_GREEN = 2,
@@ -30,9 +30,9 @@ enum vga_color {
 	VGA_COLOR_LIGHT_MAGENTA = 13,
 	VGA_COLOR_LIGHT_BROWN = 14,
 	VGA_COLOR_WHITE = 15,
-};
+} VGA_COLOR;
 
-static inline uint8_t vga_entry_color(enum vga_color fg, enum vga_color bg) {
+static inline uint8_t vga_entry_color(VGA_COLOR fg, VGA_COLOR bg) {
 	return fg | bg << 4;
 }
 
