@@ -49,7 +49,7 @@ size_t strlen(const char* str) {
 
 #define VGA_WIDTH   80
 #define VGA_HEIGHT  25
-#define VGA_MEMORY  0xB8000 
+#define VGA_MEMORY  0xC03FF000;
 
 size_t terminal_row;
 size_t terminal_column;
@@ -116,9 +116,11 @@ void kernel_main(void) {
 	/* Initialize terminal interface */
 	terminal_initialize();
 
-	/* Newline support is left as an exercise. */
     for (size_t i=0; i<30; i++) {
-        terminal_putchar('0' + i);
+        for (size_t j=0; j<i; j++) {
+            terminal_putchar('*');
+        }
+        terminal_writestring("Hello world!");
         terminal_putchar('\n');
     }
 }
