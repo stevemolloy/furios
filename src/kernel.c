@@ -13,9 +13,6 @@
 #error "This tutorial needs to be compiled with a ix86-elf compiler"
 #endif
 
-// TODO: Don't hardcode this
-#define MEMLIM 134217728 // 128MiB limit that is QEMU default
-
 /* Hardware text mode color constants. */
 typedef enum {
 	VGA_COLOR_BLACK = 0,
