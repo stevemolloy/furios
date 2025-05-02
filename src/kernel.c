@@ -12,6 +12,9 @@
 #error "This tutorial needs to be compiled with a ix86-elf compiler"
 #endif
 
+// TODO: Don't hardcode this
+#define MEMLIM 134217728 // 128MiB limit that is QEMU default
+
 /* Hardware text mode color constants. */
 typedef enum {
 	VGA_COLOR_BLACK = 0,
@@ -112,7 +115,32 @@ void terminal_writestring(const char* data) {
 	terminal_write(data, strlen(data));
 }
 
-void kernel_main(void) {
+#define INT2STR_BUFFLEN 11
+void int_to_string(unsigned long val, char *buff, size_t len) {
+    for (size_t i=0; i<len; i++) buff[i] = 0;
+
+    if (val == 0) {
+        buff[0] = '0';
+        return;
+    }
+    unsigned long num_digits = 0;
+    unsigned long temp = val;
+    while (temp > 0) {
+        num_digits++;
+        temp /= 10;
+    }
+
+    while (val > 0) {
+        buff[--num_digits] = (val % 10) + '0';
+        val /= 10;
+    }
+}
+
+void kernel_main(unsigned long magic, unsigned long addr) {
+    (void)addr;
+
+    char int_to_string_buff[INT2STR_BUFFLEN] = {0};
+
 	/* Initialize terminal interface */
 	terminal_initialize();
 
@@ -123,5 +151,15 @@ void kernel_main(void) {
         terminal_writestring("Hello world!");
         terminal_putchar('\n');
     }
+
+    terminal_writestring("magic = ");
+    int_to_string(magic, int_to_string_buff, sizeof(int_to_string_buff) / sizeof(int_to_string_buff[0]));
+    terminal_writestring(int_to_string_buff);
+    terminal_putchar('\n');
+
+    terminal_writestring("addr = ");
+    int_to_string(addr, int_to_string_buff, sizeof(int_to_string_buff) / sizeof(int_to_string_buff[0]));
+    terminal_writestring(int_to_string_buff);
+    terminal_putchar('\n');
 }
 
