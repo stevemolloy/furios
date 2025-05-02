@@ -33,6 +33,10 @@ typedef enum {
 	VGA_COLOR_WHITE = 15,
 } VGA_COLOR;
 
+#define ARRLEN(arr) sizeof((arr)) / sizeof((arr)[0])
+#define INT2STR_BUFFLEN 11
+char int_to_string_buff[INT2STR_BUFFLEN] = {0};
+
 static inline uint8_t vga_entry_color(VGA_COLOR fg, VGA_COLOR bg) {
 	return fg | bg << 4;
 }
@@ -90,7 +94,7 @@ void terminal_scroll_up(void) {
     }
 }
 
-void terminal_putchar(char c) {
+void kputchar(char c) {
 	if (terminal_row == VGA_HEIGHT) {
         terminal_scroll_up();
         terminal_row--;
@@ -106,15 +110,14 @@ void terminal_putchar(char c) {
 
 void terminal_write(const char* data, size_t size) {
 	for (size_t i = 0; i < size; i++)
-		terminal_putchar(data[i]);
+		kputchar(data[i]);
 }
 
-void terminal_writestring(const char* data) {
+void kprint_str(const char* data) {
 	terminal_write(data, strlen(data));
 }
 
-#define INT2STR_BUFFLEN 11
-void int_to_string(uint32_t val, char *buff, size_t len) {
+void int_to_string(uint32_t val, char *buff, size_t len, uint32_t base) {
     for (size_t i=0; i<len; i++) buff[i] = 0;
 
     if (val == 0) {
@@ -125,60 +128,88 @@ void int_to_string(uint32_t val, char *buff, size_t len) {
     uint32_t temp = val;
     while (temp > 0) {
         num_digits++;
-        temp /= 10;
+        temp /= base;
     }
 
     while (val > 0) {
-        buff[--num_digits] = (val % 10) + '0';
-        val /= 10;
+        uint32_t buff_val = (val % base);
+        if (buff_val > 9) {
+            buff[--num_digits] = (buff_val - 10) + 'A';
+        } else {
+            buff[--num_digits] = (val % base) + '0';
+        }
+        val /= base;
     }
 }
 
-#define ARRLEN(arr) sizeof((arr)) / sizeof((arr)[0])
+void kprint_int(uint32_t val, uint32_t base) {
+    int_to_string(val, int_to_string_buff, ARRLEN(int_to_string_buff), base);
+    kprint_str(int_to_string_buff);
+}
 
 void kernel_main(uint32_t magic, uint32_t physaddr) {
-    char int_to_string_buff[INT2STR_BUFFLEN] = {0};
-
 	/* Initialize terminal interface */
 	terminal_initialize();
 
-    terminal_writestring("Welcome to FuriOS\n");
-    terminal_writestring("=================\n");
+    kprint_str("Welcome to FuriOS\n");
+    kprint_str("=================\n");
 
-    terminal_writestring("Magic = ");
-    int_to_string(magic, int_to_string_buff, ARRLEN(int_to_string_buff));
-    terminal_writestring(int_to_string_buff);
-    terminal_putchar('\n');
-
-    terminal_writestring("Physaddr of multiboot header = ");
-    int_to_string(physaddr, int_to_string_buff, ARRLEN(int_to_string_buff));
-    terminal_writestring(int_to_string_buff);
-    terminal_putchar('\n');
+    kprint_str("Magic = 0x");
+    kprint_int(magic, 16);
+    kprint_str(" (should be 0x");
+    kprint_int(MULTIBOOT_BOOTLOADER_MAGIC, 16);
+    kprint_str(")\n");
 
     if (magic != MULTIBOOT_BOOTLOADER_MAGIC) {
-        terminal_writestring("Wrong magic\n");
+        kprint_str("Wrong magic (see above)\n");
         return;
     }
 
+    kprint_str("Physaddr of multiboot header = 0x");
+    kprint_int(physaddr, 16);
+    kputchar('\n');
+
     multiboot_info_t *addr = (multiboot_info_t*)(physaddr + 0xC0000000);
 
-    uint32_t flags = (uint32_t)addr->flags;
-    terminal_writestring("multiboot flags = ");
-    int_to_string(flags, int_to_string_buff, ARRLEN(int_to_string_buff));
-    terminal_writestring(int_to_string_buff);
-    terminal_putchar('\n');
+    kprint_str("multiboot flags = 0b");
+    kprint_int(addr->flags, 2);
+    kputchar('\n');
 
-    uint32_t mem_lower = (uint32_t)addr->mem_lower;
-    terminal_writestring("multiboot mem_lower = ");
-    int_to_string(mem_lower, int_to_string_buff, ARRLEN(int_to_string_buff));
-    terminal_writestring(int_to_string_buff);
-    terminal_putchar('\n');
+    kprint_str("multiboot mem_upper = ");
+    kprint_int(addr->mem_upper, 10);
+    kputchar('\n');
 
-    uint32_t mem_upper = (uint32_t)addr->mem_upper;
-    terminal_writestring("multiboot mem_upper = ");
-    int_to_string(mem_upper, int_to_string_buff, ARRLEN(int_to_string_buff));
-    terminal_writestring(int_to_string_buff);
-    terminal_putchar('\n');
+    /* Check bit 6 to see if we have a valid memory map */
+    if(!(addr->flags >> 6 & 0x1)) {
+        kprint_str("invalid memory map given by GRUB bootloader");
+        return;
+    }
 
+    /* Loop through the memory map and display the values */
+    kprint_str("\n");
+    kprint_str("Memory map provided by GRUB:\n");
+    for(int i = 0; i < (int)addr->mmap_length; i += sizeof(multiboot_memory_map_t)) {
+        multiboot_memory_map_t* mmmt = (multiboot_memory_map_t*)(addr->mmap_addr + 0xC0000000 + i);
+
+        kprint_str("    Start: 0x");
+        kprint_int(mmmt->addr, 16);
+        kprint_str(" | Length: 0x");
+        kprint_int(mmmt->len, 16);
+        kprint_str(" | Type: ");
+        kprint_int(mmmt->type, 10);
+        kprint_str("\n");
+
+        // printf("Start Addr: %x | Length: %x | Size: %x | Type: %d\n",
+        //     mmmt->addr, mmmt->len, mmmt->size, mmmt->type);
+
+        // if(mmmt->type == MULTIBOOT_MEMORY_AVAILABLE) {
+        //     /* 
+        //      * Do something with this memory block!
+        //      * BE WARNED that some of memory shown as availiable is actually 
+        //      * actively being used by the kernel! You'll need to take that
+        //      * into account before writing to memory!
+        //      */
+        // }
+    }
 }
 
