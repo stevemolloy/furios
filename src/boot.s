@@ -60,7 +60,10 @@ _start:
 	# Size of entries in boot_page_table1 is 4 bytes.
 	addl $4, %edi
 	# Loop to the next entry if we haven't finished.
-	loop 1b
+	# loop 1b
+    decl %ecx
+    cmpl $0, %ecx
+    jne 1b
 
 3:
 	# Map VGA video memory to 0xC03FF000 as "present, writable".
