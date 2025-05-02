@@ -1,3 +1,4 @@
+#include "multiboot.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -137,8 +138,6 @@ void int_to_string(unsigned long val, char *buff, size_t len) {
 }
 
 void kernel_main(unsigned long magic, unsigned long addr) {
-    (void)addr;
-
     char int_to_string_buff[INT2STR_BUFFLEN] = {0};
 
 	/* Initialize terminal interface */
@@ -161,5 +160,9 @@ void kernel_main(unsigned long magic, unsigned long addr) {
     int_to_string(addr, int_to_string_buff, sizeof(int_to_string_buff) / sizeof(int_to_string_buff[0]));
     terminal_writestring(int_to_string_buff);
     terminal_putchar('\n');
+
+    if (magic != MULTIBOOT_BOOTLOADER_MAGIC) {
+        terminal_writestring("Wrong magic\n");
+    }
 }
 

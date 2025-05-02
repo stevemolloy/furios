@@ -109,6 +109,8 @@ _start:
 	mov $stack_top, %esp
 
 	# Enter the high-level kernel.
+    pushl %ebx # Push the pointer to the multiboot info struct
+    pushl %eax # Push the magic to be checked by the kernel
 	call kernel_main
 
 	# Infinite loop if the system has nothing more to do.
