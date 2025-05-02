@@ -42,12 +42,17 @@ _start:
 	movl $1023, %ecx
 
 1:
-	# Only map the kernel.
+    # Map the multiboot struct pointer
+    cmpl %ebx, %esi # Multiboot puts the pointer into %ebx
+    je map_mem
+
+	# Otherwise, skip mapping if before _kernel_start or after _kernel_end
 	cmpl $_kernel_start, %esi
 	jl 2f
 	cmpl $(_kernel_end - 0xC0000000), %esi
 	jge 3f
 
+map_mem:
 	# Map physical address as "present, writable". Note that this maps
 	# .text and .rodata as writable. Mind security and map them as non-writable.
 	movl %esi, %edx
@@ -60,7 +65,6 @@ _start:
 	# Size of entries in boot_page_table1 is 4 bytes.
 	addl $4, %edi
 	# Loop to the next entry if we haven't finished.
-	# loop 1b
     decl %ecx
     cmpl $0, %ecx
     jne 1b

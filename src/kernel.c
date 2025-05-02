@@ -117,15 +117,15 @@ void terminal_writestring(const char* data) {
 }
 
 #define INT2STR_BUFFLEN 11
-void int_to_string(unsigned long val, char *buff, size_t len) {
+void int_to_string(uint32_t val, char *buff, size_t len) {
     for (size_t i=0; i<len; i++) buff[i] = 0;
 
     if (val == 0) {
         buff[0] = '0';
         return;
     }
-    unsigned long num_digits = 0;
-    unsigned long temp = val;
+    uint32_t num_digits = 0;
+    uint32_t temp = val;
     while (temp > 0) {
         num_digits++;
         temp /= 10;
@@ -137,32 +137,51 @@ void int_to_string(unsigned long val, char *buff, size_t len) {
     }
 }
 
-void kernel_main(unsigned long magic, unsigned long addr) {
+#define ARRLEN(arr) sizeof((arr)) / sizeof((arr)[0])
+
+void kernel_main(uint32_t magic, uint32_t physaddr) {
     char int_to_string_buff[INT2STR_BUFFLEN] = {0};
 
 	/* Initialize terminal interface */
 	terminal_initialize();
 
-    for (size_t i=0; i<30; i++) {
-        for (size_t j=0; j<i; j++) {
-            terminal_putchar('*');
-        }
-        terminal_writestring("Hello world!");
-        terminal_putchar('\n');
-    }
+    terminal_writestring("Welcome to FuriOS\n");
+    terminal_writestring("=================\n");
 
-    terminal_writestring("magic = ");
-    int_to_string(magic, int_to_string_buff, sizeof(int_to_string_buff) / sizeof(int_to_string_buff[0]));
+    terminal_writestring("Magic = ");
+    int_to_string(magic, int_to_string_buff, ARRLEN(int_to_string_buff));
     terminal_writestring(int_to_string_buff);
     terminal_putchar('\n');
 
-    terminal_writestring("addr = ");
-    int_to_string(addr, int_to_string_buff, sizeof(int_to_string_buff) / sizeof(int_to_string_buff[0]));
+    terminal_writestring("Physaddr of multiboot header = ");
+    int_to_string(physaddr, int_to_string_buff, ARRLEN(int_to_string_buff));
     terminal_writestring(int_to_string_buff);
     terminal_putchar('\n');
 
     if (magic != MULTIBOOT_BOOTLOADER_MAGIC) {
         terminal_writestring("Wrong magic\n");
+        return;
     }
+
+    multiboot_info_t *addr = (multiboot_info_t*)(physaddr + 0xC0000000);
+
+    uint32_t flags = (uint32_t)addr->flags;
+    terminal_writestring("multiboot flags = ");
+    int_to_string(flags, int_to_string_buff, ARRLEN(int_to_string_buff));
+    terminal_writestring(int_to_string_buff);
+    terminal_putchar('\n');
+
+    uint32_t mem_lower = (uint32_t)addr->mem_lower;
+    terminal_writestring("multiboot mem_lower = ");
+    int_to_string(mem_lower, int_to_string_buff, ARRLEN(int_to_string_buff));
+    terminal_writestring(int_to_string_buff);
+    terminal_putchar('\n');
+
+    uint32_t mem_upper = (uint32_t)addr->mem_upper;
+    terminal_writestring("multiboot mem_upper = ");
+    int_to_string(mem_upper, int_to_string_buff, ARRLEN(int_to_string_buff));
+    terminal_writestring(int_to_string_buff);
+    terminal_putchar('\n');
+
 }
 
