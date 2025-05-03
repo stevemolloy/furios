@@ -214,6 +214,46 @@ void kernel_main(uint32_t magic, uint32_t physaddr) {
     kprint_cstr("\nExperimenting with the paging\n");
     kprint_cstr("=============================\n");
 
+    const uint32_t* PAGE_DIR = (uint32_t*)0xFFFFF000;
+    // const uint32_t* PAGE_TABLES = (uint32_t*)0xFFC00000;
+    
+    kprint_cstr("PAGE_DIR[768] = 0x");
+    kprint_int(PAGE_DIR[768], 16);
+    if (PAGE_DIR[768] & 0x1) kprint_cstr(" (lower bit is set, so this page table is present)\n");
+    else kprint_cstr(" (lower bit is not set, so this page table is not present)\n");
+    kprint_cstr("Page table physical address: 0x");
+    kprint_int(PAGE_DIR[768] & 0xFFFFF000, 16);
+    kprint_cstr("\n");
+
+    kprint_cstr("Page directory entry flags: 0b");
+    kprint_int(PAGE_DIR[768] & 0xFFF, 2);
+    kprint_cstr("\n");
+
+    extern uint32_t _kernel_start;
+    extern uint32_t _kernel_end;
+    kprint_cstr("Kernel start symbol: 0x");
+    kprint_int((uint32_t)&_kernel_start, 16);
+    kprint_cstr("\nKernel end symbol: 0x");
+    kprint_int((uint32_t)&_kernel_end, 16);
+    kprint_cstr("\n");
+
+    uint32_t *page_table_768 = (uint32_t*)(0xFFC00000 + (768 * 0x1000));
+    uint32_t offs_one_meg = (uint32_t)&_kernel_start >> 12;
+    size_t i = offs_one_meg;
+    // while (page_table_768[i] != 0) {
+    for (i=0; i<1024; i++) {
+        if (page_table_768[i] == 0) continue;
+        kprint_cstr("page_table_768[");
+        kprint_int(i, 10);
+        kprint_cstr("] = 0x");
+        kprint_int(page_table_768[i], 16);
+        kprint_cstr(" (0b");
+        kprint_int(page_table_768[i], 2);
+        kprint_cstr(")");
+        kprint_cstr("\n");
     }
+
+    terminal_setcolor(VGA_COLOR_RED);
+    kprint_cstr("\nKERNEL EXECUTION FINISHED. RETURNING TO boot.s");
 }
 
