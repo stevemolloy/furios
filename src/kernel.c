@@ -37,6 +37,8 @@ typedef enum {
 #define INT2STR_BUFFLEN 11
 char int_to_string_buff[INT2STR_BUFFLEN] = {0};
 
+#define FLUSH_TLB asm volatile("movl %cr3, %eax; movl %eax, %cr3")
+
 static inline uint8_t vga_entry_color(VGA_COLOR fg, VGA_COLOR bg) {
 	return fg | bg << 4;
 }
@@ -113,7 +115,7 @@ void terminal_write(const char* data, size_t size) {
 		kputchar(data[i]);
 }
 
-void kprint_str(const char* data) {
+void kprint_cstr(const char* data) {
 	terminal_write(data, strlen(data));
 }
 
@@ -144,72 +146,74 @@ void int_to_string(uint32_t val, char *buff, size_t len, uint32_t base) {
 
 void kprint_int(uint32_t val, uint32_t base) {
     int_to_string(val, int_to_string_buff, ARRLEN(int_to_string_buff), base);
-    kprint_str(int_to_string_buff);
+    kprint_cstr(int_to_string_buff);
 }
 
 void kernel_main(uint32_t magic, uint32_t physaddr) {
 	/* Initialize terminal interface */
 	terminal_initialize();
 
-    kprint_str("Welcome to FuriOS\n");
-    kprint_str("=================\n");
+    kprint_cstr("Welcome to FuriOS\n");
+    kprint_cstr("=================\n");
 
-    kprint_str("Magic = 0x");
+    kprint_cstr("Magic = 0x");
     kprint_int(magic, 16);
-    kprint_str(" (should be 0x");
+    kprint_cstr(" (should be 0x");
     kprint_int(MULTIBOOT_BOOTLOADER_MAGIC, 16);
-    kprint_str(")\n");
+    kprint_cstr(")\n");
 
     if (magic != MULTIBOOT_BOOTLOADER_MAGIC) {
-        kprint_str("Wrong magic (see above)\n");
+        kprint_cstr("Wrong magic (see above)\n");
         return;
     }
 
-    kprint_str("Physaddr of multiboot header = 0x");
+    kprint_cstr("Physaddr of multiboot header = 0x");
     kprint_int(physaddr, 16);
     kputchar('\n');
 
     multiboot_info_t *addr = (multiboot_info_t*)(physaddr + 0xC0000000);
 
-    kprint_str("multiboot flags = 0b");
+    kprint_cstr("multiboot flags = 0b");
     kprint_int(addr->flags, 2);
     kputchar('\n');
 
-    kprint_str("multiboot mem_upper = ");
+    kprint_cstr("multiboot mem_upper = ");
     kprint_int(addr->mem_upper, 10);
     kputchar('\n');
 
     /* Check bit 6 to see if we have a valid memory map */
     if(!(addr->flags >> 6 & 0x1)) {
-        kprint_str("invalid memory map given by GRUB bootloader");
+        kprint_cstr("invalid memory map given by GRUB bootloader");
         return;
     }
 
     /* Loop through the memory map and display the values */
-    kprint_str("\n");
-    kprint_str("Memory map provided by GRUB:\n");
+    kprint_cstr("\n");
+    kprint_cstr("Memory map provided by GRUB:\n");
     for(int i = 0; i < (int)addr->mmap_length; i += sizeof(multiboot_memory_map_t)) {
         multiboot_memory_map_t* mmmt = (multiboot_memory_map_t*)(addr->mmap_addr + 0xC0000000 + i);
 
-        kprint_str("    Start: 0x");
+        kprint_cstr("    Start: 0x");
         kprint_int(mmmt->addr, 16);
-        kprint_str(" | Length: 0x");
+        kprint_cstr(" | Length: 0x");
         kprint_int(mmmt->len, 16);
-        kprint_str(" | Type: ");
+        kprint_cstr(" | Type: ");
         kprint_int(mmmt->type, 10);
-        kprint_str("\n");
+        kprint_cstr("\n");
 
-        // printf("Start Addr: %x | Length: %x | Size: %x | Type: %d\n",
-        //     mmmt->addr, mmmt->len, mmmt->size, mmmt->type);
+        if(mmmt->type == MULTIBOOT_MEMORY_AVAILABLE) {
+            /* 
+             * Do something with this memory block!
+             * BE WARNED that some of memory shown as availiable is actually 
+             * actively being used by the kernel! You'll need to take that
+             * into account before writing to memory!
+             */
+        }
+    }
 
-        // if(mmmt->type == MULTIBOOT_MEMORY_AVAILABLE) {
-        //     /* 
-        //      * Do something with this memory block!
-        //      * BE WARNED that some of memory shown as availiable is actually 
-        //      * actively being used by the kernel! You'll need to take that
-        //      * into account before writing to memory!
-        //      */
-        // }
+    kprint_cstr("\nExperimenting with the paging\n");
+    kprint_cstr("=============================\n");
+
     }
 }
 
