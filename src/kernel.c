@@ -27,6 +27,10 @@ uint32_t virtaddr_from_pd_pt(uint32_t pdindex, uint32_t ptindex) {
     return (pdindex << 22 | ptindex << 12);
 }
 
+uint32_t ptentry_to_addr(uint32_t ptentry) {
+    return ptentry & 0xFFFFF000;
+}
+
 /* Hardware text mode color constants. */
 typedef enum {
 	VGA_COLOR_BLACK = 0,
@@ -164,6 +168,18 @@ void kprint_int(uint32_t val, uint32_t base) {
 }
 
 void kernel_main(uint32_t magic, uint32_t physaddr) {
+    extern uint32_t *_kernel_start;
+    extern uint32_t *_kernel_end;
+    const uint32_t kernel_static_size = 
+        (uint32_t)&_kernel_end - (uint32_t)&_kernel_start - 0xC0000000;
+    if (kernel_static_size >= 0x400000) {
+        terminal_setcolor(VGA_COLOR_RED);
+        kprint_cstr("Compiled kernel is larger than 4 MiB, ");
+        kprint_cstr("which breaks certain assumptions in boot.s.\n");
+        kprint_cstr("These must be fixed before moving on.\n");
+        return;
+    }
+
 	/* Initialize terminal interface */
 	terminal_initialize();
 
@@ -245,45 +261,47 @@ void kernel_main(uint32_t magic, uint32_t physaddr) {
         kprint_cstr("\n");
         for (size_t pagenum=0; pagenum<1024; pagenum++) {
             if (page_table[pagenum] == 0) continue;
+            uint32_t mapped_addr = ptentry_to_addr(page_table[pagenum]);
+            if (mapped_addr > last_allocated_phys_page)
+                last_allocated_phys_page = mapped_addr;
+
             kprint_cstr("    page ");
             kprint_int(pagenum, 10);
             kprint_cstr(" (0x");
             kprint_int(virtaddr_from_pd_pt(tablenum, pagenum), 16);
             kprint_cstr(") is mapped at 0x");
-            kprint_int(page_table[pagenum], 16);
+            kprint_int(mapped_addr, 16);
             kprint_cstr("\n");
         }
     }
 
-    // uint32_t *page_table_768 = (uint32_t*)(0xFFC00000 + (KERNEL_PAGE_START * 0x1000));
-    // uint32_t offs_one_meg = (uint32_t)&_kernel_start >> 12;
-    // size_t i = offs_one_meg;
-    // // while (page_table_768[i] != 0) {
-    // for (i=0; i<1024; i++) {
-    //     if (page_table_768[i] == 0) continue;
-    //     kprint_cstr("page_table_768[");
-    //     kprint_int(i, 10);
-    //     kprint_cstr("] = 0x");
-    //     kprint_int(page_table_768[i], 16);
-    //     kprint_cstr(" (0b");
-    //     kprint_int(page_table_768[i], 2);
-    //     kprint_cstr(")");
-    //     kprint_cstr("\n");
-    // }
+    kprint_cstr("Last allocated page is at 0x");
+    kprint_int(last_allocated_phys_page, 16);
+    kprint_cstr("\n");
 
-    // kprint_cstr("Modifying page_table_768 to see if I can\n");
-    // page_table_768[500] = 0x110000 | 0x3;
-    // for (i=0; i<1024; i++) {
-    //     if (page_table_768[i] == 0) continue;
-    //     kprint_cstr("page_table_768[");
-    //     kprint_int(i, 10);
-    //     kprint_cstr("] = 0x");
-    //     kprint_int(page_table_768[i], 16);
-    //     kprint_cstr(" (0b");
-    //     kprint_int(page_table_768[i], 2);
-    //     kprint_cstr(")");
-    //     kprint_cstr("\n");
-    // }
+    kprint_cstr("Modifying page_table_768 to see if I can\n");
+
+    uint32_t *page_table_768 = (uint32_t*)(0xFFC00000 + (KERNEL_PAGE_START * 0x1000));
+    page_table_768[500] = (last_allocated_phys_page + 4096) | 0x3;
+    last_allocated_phys_page += 4096;
+    page_table_768[501] = (last_allocated_phys_page + 4096) | 0x3;
+    last_allocated_phys_page += 4096;
+
+    for (size_t i=0; i<1024; i++) {
+        if (page_table_768[i] == 0) continue;
+        kprint_cstr("page_table_768[");
+        kprint_int(i, 10);
+        kprint_cstr("] = 0x");
+        kprint_int(page_table_768[i], 16);
+        kprint_cstr(" (0b");
+        kprint_int(page_table_768[i], 2);
+        kprint_cstr(")");
+        kprint_cstr("\n");
+    }
+
+    kprint_cstr("Kernel size (static) = 0x");
+    kprint_int(kernel_static_size, 16);
+    kprint_cstr("\n");
 
     terminal_setcolor(VGA_COLOR_RED);
     kprint_cstr("\nKERNEL EXECUTION FINISHED. RETURNING TO boot.s");
