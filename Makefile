@@ -18,7 +18,7 @@ myos.iso: isodir/boot/myos.bin isodir/boot/grub/grub.cfg
 	grub-mkrescue -o myos.iso isodir
 
 run: myos.iso
-	qemu-system-i386 -m size=256 myos.iso
+	qemu-system-i386 -m size=64 myos.iso
 
 clean:
 	rm -rf build
