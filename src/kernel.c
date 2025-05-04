@@ -1,7 +1,8 @@
-#include "multiboot.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+
+#include "multiboot.h"
 
 /* Check if the compiler thinks you are targeting the wrong operating system. */
 #if defined(__linux__)
@@ -167,6 +168,11 @@ void kprint_int(uint32_t val, uint32_t base) {
     kprint_cstr(int_to_string_buff);
 }
 
+void welcome_message(void) {
+    kprint_cstr("Welcome to FuriOS\n");
+    kprint_cstr("=================\n");
+}
+
 void kernel_main(uint32_t magic, uint32_t physaddr) {
     extern uint32_t *_kernel_start;
     extern uint32_t *_kernel_end;
@@ -183,36 +189,18 @@ void kernel_main(uint32_t magic, uint32_t physaddr) {
 	/* Initialize terminal interface */
 	terminal_initialize();
 
-    kprint_cstr("Welcome to FuriOS\n");
-    kprint_cstr("=================\n");
-
-    kprint_cstr("Magic = 0x");
-    kprint_int(magic, 16);
-    kprint_cstr(" (should be 0x");
-    kprint_int(MULTIBOOT_BOOTLOADER_MAGIC, 16);
-    kprint_cstr(")\n");
+    welcome_message();
 
     if (magic != MULTIBOOT_BOOTLOADER_MAGIC) {
         kprint_cstr("Wrong magic (see above)\n");
         return;
     }
 
-    kprint_cstr("Physaddr of multiboot header = 0x");
-    kprint_int(physaddr, 16);
-    kputchar('\n');
-
     multiboot_info_t *addr = (multiboot_info_t*)(physaddr + 0xC0000000);
-
-    kprint_cstr("multiboot flags = 0b");
-    kprint_int(addr->flags, 2);
-    kputchar('\n');
-
-    kprint_cstr("multiboot mem_upper = ");
-    kprint_int(addr->mem_upper, 10);
-    kputchar('\n');
 
     /* Check bit 6 to see if we have a valid memory map */
     if(!(addr->flags >> 6 & 0x1)) {
+        terminal_setcolor(VGA_COLOR_RED);
         kprint_cstr("invalid memory map given by GRUB bootloader");
         return;
     }
