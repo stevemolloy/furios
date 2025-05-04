@@ -13,6 +13,20 @@
 #error "This tutorial needs to be compiled with a ix86-elf compiler"
 #endif
 
+#define KERNEL_PAGE_START 768
+uint32_t last_allocated_phys_page = 0;
+uint32_t highest_possible_page = 0;
+uint8_t kernel_page_state[256] = {0};
+
+uint32_t get_next_page_addr(uint32_t addr) {
+    if (addr % 4096 == 0) return addr + 4096;
+    return ((addr / 4096) + 1) * 4096;
+}
+
+uint32_t virtaddr_from_pd_pt(uint32_t pdindex, uint32_t ptindex) {
+    return (pdindex << 22 | ptindex << 12);
+}
+
 /* Hardware text mode color constants. */
 typedef enum {
 	VGA_COLOR_BLACK = 0,
@@ -192,66 +206,84 @@ void kernel_main(uint32_t magic, uint32_t physaddr) {
     kprint_cstr("Memory map provided by GRUB:\n");
     for(int i = 0; i < (int)addr->mmap_length; i += sizeof(multiboot_memory_map_t)) {
         multiboot_memory_map_t* mmmt = (multiboot_memory_map_t*)(addr->mmap_addr + 0xC0000000 + i);
+        if (mmmt->type != MULTIBOOT_MEMORY_AVAILABLE || mmmt->addr == 0x0) continue;
+        const uint32_t mem_start = mmmt->addr;
+        const uint32_t mem_length = mmmt->len;
+        const uint32_t mem_end = mem_start + mem_length;
+
+        highest_possible_page = get_next_page_addr(mem_end - 1) - 4096;
 
         kprint_cstr("    Start: 0x");
-        kprint_int(mmmt->addr, 16);
+        kprint_int(mem_start, 16);
+        kprint_cstr(" | End: 0x");
+        kprint_int(mem_end, 16);
         kprint_cstr(" | Length: 0x");
-        kprint_int(mmmt->len, 16);
-        kprint_cstr(" | Type: ");
-        kprint_int(mmmt->type, 10);
+        kprint_int(mem_length, 16);
         kprint_cstr("\n");
 
-        if(mmmt->type == MULTIBOOT_MEMORY_AVAILABLE) {
-            /* 
-             * Do something with this memory block!
-             * BE WARNED that some of memory shown as availiable is actually 
-             * actively being used by the kernel! You'll need to take that
-             * into account before writing to memory!
-             */
-        }
+        kprint_cstr("    Highest possible page = 0x");
+        kprint_int(highest_possible_page, 16);
+        kprint_cstr("\n");
+
+        // TODO: Only mapping the first chunk of physical memory that I find
+        break;
     }
 
     kprint_cstr("\nExperimenting with the paging\n");
     kprint_cstr("=============================\n");
 
     const uint32_t* PAGE_DIR = (uint32_t*)0xFFFFF000;
-    // const uint32_t* PAGE_TABLES = (uint32_t*)0xFFC00000;
     
-    kprint_cstr("PAGE_DIR[768] = 0x");
-    kprint_int(PAGE_DIR[768], 16);
-    if (PAGE_DIR[768] & 0x1) kprint_cstr(" (lower bit is set, so this page table is present)\n");
-    else kprint_cstr(" (lower bit is not set, so this page table is not present)\n");
-    kprint_cstr("Page table physical address: 0x");
-    kprint_int(PAGE_DIR[768] & 0xFFFFF000, 16);
-    kprint_cstr("\n");
-
-    kprint_cstr("Page directory entry flags: 0b");
-    kprint_int(PAGE_DIR[768] & 0xFFF, 2);
-    kprint_cstr("\n");
-
-    extern uint32_t _kernel_start;
-    extern uint32_t _kernel_end;
-    kprint_cstr("Kernel start symbol: 0x");
-    kprint_int((uint32_t)&_kernel_start, 16);
-    kprint_cstr("\nKernel end symbol: 0x");
-    kprint_int((uint32_t)&_kernel_end, 16);
-    kprint_cstr("\n");
-
-    uint32_t *page_table_768 = (uint32_t*)(0xFFC00000 + (768 * 0x1000));
-    uint32_t offs_one_meg = (uint32_t)&_kernel_start >> 12;
-    size_t i = offs_one_meg;
-    // while (page_table_768[i] != 0) {
-    for (i=0; i<1024; i++) {
-        if (page_table_768[i] == 0) continue;
-        kprint_cstr("page_table_768[");
-        kprint_int(i, 10);
-        kprint_cstr("] = 0x");
-        kprint_int(page_table_768[i], 16);
-        kprint_cstr(" (0b");
-        kprint_int(page_table_768[i], 2);
-        kprint_cstr(")");
+    for (size_t tablenum=0; tablenum<1023; tablenum++) {
+        if (!(PAGE_DIR[tablenum] & 0x1)) {
+            continue;
+        }
+        if (tablenum >= KERNEL_PAGE_START) kernel_page_state[tablenum - KERNEL_PAGE_START] = 1;
+        uint32_t *page_table = (uint32_t*)(0xFFC00000 + (tablenum * 0x1000));
+        kprint_cstr("Page table ");
+        kprint_int(tablenum, 10);
         kprint_cstr("\n");
+        for (size_t pagenum=0; pagenum<1024; pagenum++) {
+            if (page_table[pagenum] == 0) continue;
+            kprint_cstr("    page ");
+            kprint_int(pagenum, 10);
+            kprint_cstr(" (0x");
+            kprint_int(virtaddr_from_pd_pt(tablenum, pagenum), 16);
+            kprint_cstr(") is mapped at 0x");
+            kprint_int(page_table[pagenum], 16);
+            kprint_cstr("\n");
+        }
     }
+
+    // uint32_t *page_table_768 = (uint32_t*)(0xFFC00000 + (KERNEL_PAGE_START * 0x1000));
+    // uint32_t offs_one_meg = (uint32_t)&_kernel_start >> 12;
+    // size_t i = offs_one_meg;
+    // // while (page_table_768[i] != 0) {
+    // for (i=0; i<1024; i++) {
+    //     if (page_table_768[i] == 0) continue;
+    //     kprint_cstr("page_table_768[");
+    //     kprint_int(i, 10);
+    //     kprint_cstr("] = 0x");
+    //     kprint_int(page_table_768[i], 16);
+    //     kprint_cstr(" (0b");
+    //     kprint_int(page_table_768[i], 2);
+    //     kprint_cstr(")");
+    //     kprint_cstr("\n");
+    // }
+
+    // kprint_cstr("Modifying page_table_768 to see if I can\n");
+    // page_table_768[500] = 0x110000 | 0x3;
+    // for (i=0; i<1024; i++) {
+    //     if (page_table_768[i] == 0) continue;
+    //     kprint_cstr("page_table_768[");
+    //     kprint_int(i, 10);
+    //     kprint_cstr("] = 0x");
+    //     kprint_int(page_table_768[i], 16);
+    //     kprint_cstr(" (0b");
+    //     kprint_int(page_table_768[i], 2);
+    //     kprint_cstr(")");
+    //     kprint_cstr("\n");
+    // }
 
     terminal_setcolor(VGA_COLOR_RED);
     kprint_cstr("\nKERNEL EXECUTION FINISHED. RETURNING TO boot.s");
